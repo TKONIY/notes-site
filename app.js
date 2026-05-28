@@ -10,6 +10,22 @@
 
   const state = { query: "", tag: TAG_ALL };
 
+  // 正文可存为 Markdown 明文(content)或 Base64(contentB64，避开模板字符串里的反引号冲突)。
+  function decodeB64(b64) {
+    try {
+      const bin = atob(String(b64).replace(/\s+/g, ""));
+      const bytes = Uint8Array.from(bin, (c) => c.charCodeAt(0));
+      return new TextDecoder("utf-8").decode(bytes);
+    } catch (e) {
+      return "";
+    }
+  }
+  function noteMarkdown(n) {
+    if (n._md != null) return n._md;
+    n._md = n.contentB64 ? decodeB64(n.contentB64) : n.content || "";
+    return n._md;
+  }
+
   const app = document.getElementById("app");
   const progressEl = document.getElementById("progress");
   const searchInput = document.getElementById("search-input");
@@ -281,7 +297,7 @@
     const q = state.query.trim().toLowerCase();
     return sortedNotes().filter((n) => {
       const tagOk = state.tag === TAG_ALL || (n.tags || []).includes(state.tag);
-      const hay = [n.title, n.summary, n.category, (n.tags || []).join(" "), n.content]
+      const hay = [n.title, n.summary, n.category, (n.tags || []).join(" "), noteMarkdown(n)]
         .filter(Boolean)
         .join(" ")
         .toLowerCase();
@@ -329,7 +345,7 @@
     } else {
       html += '<div class="grid">';
       notes.forEach((n, idx) => {
-        const excerpt = n.summary || plainExcerpt(n.content, 150);
+        const excerpt = n.summary || plainExcerpt(noteMarkdown(n), 150);
         html +=
           '<article class="card" data-id="' +
           escapeHtml(n.id) +
@@ -352,7 +368,7 @@
           '<div class="meta"><span>' +
           formatDate(n.date) +
           "</span><span>约 " +
-          readingTime(n.content) +
+          readingTime(noteMarkdown(n)) +
           ' 分钟</span><span class="read-on">阅读 <span aria-hidden="true">→</span></span></div>' +
           "</article>";
       });
@@ -375,7 +391,7 @@
       return;
     }
     usedIds = {};
-    const body = renderMarkdown(note.content);
+    const body = renderMarkdown(noteMarkdown(note));
 
     let meta =
       '<div class="meta">' +
@@ -384,7 +400,7 @@
       "</span>" +
       '<span class="sep"></span>' +
       "<span>约 " +
-      readingTime(note.content) +
+      readingTime(noteMarkdown(note)) +
       " 分钟阅读</span>";
     if (note.source) {
       meta +=
