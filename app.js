@@ -169,6 +169,45 @@
     return false;
   }
 
+  /* ----------------------------------------------------- syntax highlight */
+  // 轻量 Python / 伪代码分词高亮（零依赖，配 Kanagawa 配色）。
+  const CODE_KW = new Set(
+    ("class def return if elif else for while in not and or is import from as with " +
+      "raise assert try except finally lambda yield pass break continue global " +
+      "nonlocal del async await print")
+      .split(" ")
+  );
+  const CODE_BUILTIN = new Set(
+    ("self cls None True False int str list dict float bool set tuple bytes object " +
+      "super len range enumerate property dataclass field Enum max min hash")
+      .split(" ")
+  );
+  function highlightCode(code) {
+    const re =
+      /(#[^\n]*)|("""[\s\S]*?"""|'''[\s\S]*?'''|"(?:\\.|[^"\\])*"|'(?:\\.|[^'\\])*')|(@[A-Za-z_]\w*)|(\b\d[\d_]*(?:\.\d+)?\b)|([A-Za-z_]\w*)|(\s+)/g;
+    let out = "";
+    let last = 0;
+    let m;
+    while ((m = re.exec(code))) {
+      if (m.index > last) out += escapeHtml(code.slice(last, m.index));
+      if (m[1]) out += '<span class="tok-c">' + escapeHtml(m[1]) + "</span>";
+      else if (m[2]) out += '<span class="tok-s">' + escapeHtml(m[2]) + "</span>";
+      else if (m[3]) out += '<span class="tok-d">' + escapeHtml(m[3]) + "</span>";
+      else if (m[4]) out += '<span class="tok-n">' + escapeHtml(m[4]) + "</span>";
+      else if (m[5]) {
+        const w = m[5];
+        if (CODE_KW.has(w)) out += '<span class="tok-k">' + w + "</span>";
+        else if (CODE_BUILTIN.has(w)) out += '<span class="tok-b">' + w + "</span>";
+        else if (code[re.lastIndex] === "(")
+          out += '<span class="tok-f">' + escapeHtml(w) + "</span>";
+        else out += escapeHtml(w);
+      } else if (m[6]) out += m[6];
+      last = re.lastIndex;
+    }
+    if (last < code.length) out += escapeHtml(code.slice(last));
+    return out;
+  }
+
   /* --------------------------------------------------------- markdown block */
   function renderMarkdown(md) {
     const lines = md.replace(/\r\n?/g, "\n").split("\n");
@@ -196,7 +235,7 @@
           '<div class="code-block" data-lang="' +
           escapeHtml(lang || "code") +
           '"><button class="copy-btn" type="button">复制</button><pre><code>' +
-          escapeHtml(buf.join("\n")) +
+          highlightCode(buf.join("\n")) +
           "</code></pre></div>";
         continue;
       }
@@ -415,8 +454,15 @@
       .map((t) => "<span>" + escapeHtml(t) + "</span>")
       .join("");
 
+    const tocHidden = (function () {
+      try {
+        return localStorage.getItem("notes-toc") === "hidden";
+      } catch (e) {
+        return false;
+      }
+    })();
     app.innerHTML =
-      '<section class="view reader">' +
+      '<section class="view reader' + (tocHidden ? " toc-hidden" : "") + '">' +
       '<div class="article-col">' +
       '<button class="back" type="button">← 返回全部笔记</button>' +
       '<header class="article-head">' +
@@ -432,6 +478,7 @@
       "</div>" +
       "</div>" +
       '<nav class="toc" aria-label="目录"></nav>' +
+      '<button class="toc-fab" type="button" title="显示目录">☰ 目录</button>' +
       "</section>";
 
     buildTOC();
@@ -447,7 +494,10 @@
       if (tocEl) tocEl.style.display = "none";
       return;
     }
-    let html = '<div class="toc-title">目录</div><ul>';
+    let html =
+      '<div class="toc-title"><span>目录</span>' +
+      '<button class="toc-collapse" type="button" title="收起目录" aria-label="收起目录">✕</button>' +
+      "</div><ul>";
     heads.forEach((h) => {
       const lvl = h.tagName === "H3" ? "lvl-3" : "lvl-2";
       html +=
@@ -555,10 +605,23 @@
     const copy = e.target.closest(".copy-btn");
     const back = e.target.closest(".back");
     const tocLink = e.target.closest(".toc a");
+    const tocToggle = e.target.closest(".toc-collapse, .toc-fab");
 
     if (copy) {
       const code = copy.parentElement.querySelector("code");
       if (code) copyText(code.textContent, copy);
+      return;
+    }
+    if (tocToggle) {
+      const reader = app.querySelector(".reader");
+      if (reader) {
+        const hidden = reader.classList.toggle("toc-hidden");
+        try {
+          localStorage.setItem("notes-toc", hidden ? "hidden" : "");
+        } catch (err) {
+          /* noop */
+        }
+      }
       return;
     }
     if (tocLink) {
