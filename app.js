@@ -306,12 +306,13 @@
   }
 
   /* ------------------------------------------------------------ render home */
-  function renderHome() {
+  function renderHome(animate) {
     const notes = filterNotes();
     const tags = [TAG_ALL].concat(uniqueTags());
     const latest = sortedNotes()[0];
+    const anim = animate !== false;
 
-    let html = '<section class="view">';
+    let html = '<section class="view view--home' + (anim ? "" : " no-anim") + '">';
     html +=
       '<header class="hero">' +
       '<span class="eyebrow"><span class="dot"></span>个人知识库 · KNOWLEDGE BASE</span>' +
@@ -572,7 +573,7 @@
     }
     if (chip) {
       state.tag = chip.getAttribute("data-tag");
-      renderHome();
+      renderHome(false);
       return;
     }
     if (card) {
@@ -585,7 +586,7 @@
     if (location.hash && location.hash !== "#/" && location.hash !== "") {
       location.hash = "#/"; // 触发 router → renderHome
     } else {
-      renderHome();
+      renderHome(false);
     }
   });
 
@@ -607,7 +608,7 @@
       state.query = "";
       searchInput.blur();
       if (location.hash.startsWith("#/note/")) location.hash = "#/";
-      else renderHome();
+      else renderHome(false);
     }
   });
 
