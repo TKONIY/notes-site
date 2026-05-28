@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html lang="zh-CN" data-theme="dark">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>我的笔记库 · Notes</title>
+    <meta name="description" content="由 Claude 协助维护的个人笔记库" />
+    <link rel="stylesheet" href="styles.css" />
+    <link
+      rel="icon"
+      href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Cdefs%3E%3ClinearGradient id='g' x1='0' y1='0' x2='1' y2='1'%3E%3Cstop offset='0' stop-color='%23818cf8'/%3E%3Cstop offset='.5' stop-color='%2322d3ee'/%3E%3Cstop offset='1' stop-color='%23c084fc'/%3E%3C/linearGradient%3E%3C/defs%3E%3Crect width='100' height='100' rx='24' fill='url(%23g)'/%3E%3Ctext x='50' y='70' font-size='58' text-anchor='middle' fill='white'%3E%E2%9C%A6%3C/text%3E%3C/svg%3E"
+    />
+    <!-- 防止主题闪烁：在样式应用前确定主题 -->
+    <script>
+      (function () {
+        try {
+          var t = localStorage.getItem("notes-theme");
+          if (t) document.documentElement.setAttribute("data-theme", t);
+        } catch (e) {}
+      })();
+    </script>
+  </head>
+  <body>
+    <div class="aurora" aria-hidden="true"></div>
+    <div class="grain" aria-hidden="true"></div>
+    <div class="progress" id="progress"></div>
+
+    <nav class="nav">
+      <button class="brand" id="brand" type="button" aria-label="返回首页">
+        <span class="spark">✦</span>
+        <span class="label">笔记库</span>
+      </button>
+      <div class="nav-spacer"></div>
+      <div class="search">
+        <svg
+          class="icon"
+          width="16"
+          height="16"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="2"
+          stroke-linecap="round"
+        >
+          <circle cx="11" cy="11" r="7"></circle>
+          <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+        </svg>
+        <input
+          id="search-input"
+          type="search"
+          placeholder="搜索笔记…  按 / 聚焦"
+          autocomplete="off"
+          spellcheck="false"
+        />
+      </div>
+      <button
+        class="icon-btn theme-toggle"
+        id="theme-toggle"
+        type="button"
+        aria-label="切换主题"
+        title="切换深浅主题"
+      >
+        <svg
+          class="sun"
+          width="18"
+          height="18"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="2"
+          stroke-linecap="round"
+        >
+          <circle cx="12" cy="12" r="4"></circle>
+          <path
+            d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"
+          ></path>
+        </svg>
+        <svg
+          class="moon"
+          width="18"
+          height="18"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="2"
+          stroke-linecap="round"
+          stroke-linejoin="round"
+        >
+          <path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8z"></path>
+        </svg>
+      </button>
+    </nav>
+
+    <main class="page" id="app"></main>
+
+    <script src="notes-data.js"></script>
+    <script src="app.js"></script>
+  </body>
+</html>
